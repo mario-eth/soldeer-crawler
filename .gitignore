@@ -1,0 +1,16 @@
+.gitattributes
+/target
+dependencies/
+foundry.toml
+.dependency_reading.toml
+remappings.txt
+crawler/target/
+*.DS_Store*
+package-lock.json
+package.json
+repositories.db
+crawler/node_modules/
+crawler/zipped/*
+crawler/zipped/
+src/soldeer.toml
+*soldeer.lock
