@@ -18,5 +18,17 @@
   "@axelar-network/interchain-token-service",
   "solady",
   "@gnosis.pm/safe-contracts",
+  "@synapsecns/contracts-core",
+  "@0x/contracts-zero-ex",
+  "@0x/contracts-erc20",
+  "@0x/contracts-utils",
+  "@layerzerolabs/lz-evm-oapp-v2",
+  "@eth-optimism/contracts-bedrock",
+  "@solidstate/contracts",
+  "erc721a"
   
+]
+
+"github" = [
+  "foundry-rs/forge-std"
 ]

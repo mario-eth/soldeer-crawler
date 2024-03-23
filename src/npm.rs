@@ -1,7 +1,8 @@
-use crate::utils::{ get_current_working_dir, read_file_to_string };
+use crate::utils::{get_current_working_dir, read_file_to_string};
+use crate::VersionStruct;
 use serde_derive::Deserialize;
-use std::fmt::{ self };
-use std::process::{ Command, Output };
+use std::fmt::{self};
+use std::process::{Command, Output};
 
 pub fn load_repositories() -> Result<Vec<String>, LoadError> {
     println!("Loading list of repositories for NPM");
@@ -34,7 +35,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
     return Ok(repositories);
 }
 
-pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<String>, LoadError> {
+pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, LoadError> {
     let output: Output = Command::new("npm")
         .arg("view")
         .arg(repository)
@@ -42,15 +43,22 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<String>, LoadErr
         .output()
         .expect("failed to execute process");
     // println!("status: {}", String::from_utf8(output.stdout.clone()).unwrap());
-    let json_string: String = String::from_utf8(output.stdout.clone()).unwrap().replace("'", "\"");
+    let json_string: String = String::from_utf8(output.stdout.clone())
+        .unwrap()
+        .replace("'", "\"");
 
-    let versions: Vec<String> = serde_json
-        ::from_str::<Vec<String>>(json_string.as_str())
+    let versions_string: Vec<String> = serde_json::from_str::<Vec<String>>(json_string.as_str())
         .map_err(|err: serde_json::Error| {
             return err;
         })
         .unwrap();
-    println!("{} versions: {:?}", repository, versions);
+    let mut versions: Vec<VersionStruct> = Vec::new();
+    for v in versions_string {
+        versions.push(VersionStruct {
+            name: v,
+            url: "".to_string(),
+        })
+    }
     return Ok(versions);
 }
 
@@ -58,7 +66,7 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<String>, LoadErr
 #[allow(dead_code)]
 pub fn check_versions_health(
     repository: &String,
-    versions: Vec<String>
+    versions: Vec<String>,
 ) -> Result<Vec<String>, HealthCheckError> {
     let mut valid_versions: Vec<String> = Vec::new();
     for version in versions.iter() {
@@ -66,9 +74,10 @@ pub fn check_versions_health(
         let output: Output = Command::new("npm")
             .arg("i")
             .arg(format!("{}@{}", repository, version))
-            .arg("--dry-run")
+            .arg("--force --dry-run")
             .output()
             .expect("failed to execute process");
+        println!("output {:?}", output);
         if output.status.success() {
             valid_versions.push(version.clone());
         } else {
@@ -77,24 +86,27 @@ pub fn check_versions_health(
     }
     return Ok(valid_versions);
 }
-pub fn retrieve_version(repository: &String, version: &String) -> Result<(), HealthCheckError> {
+pub fn retrieve_version(
+    repository: &String,
+    version: &VersionStruct,
+) -> Result<(), HealthCheckError> {
     let output: Output = Command::new("npm")
         .arg("i")
-        .arg("--prefix . downloaded ")
-        .arg(format!("{}@{}", repository, version))
+        .arg("--force --prefix . downloaded ")
+        .arg(format!("{}@{}", repository, version.name))
         .output()
         .expect("failed to execute process");
+    println!("output {:?}", output);
 
     if output.status.success() {
         return Ok(());
     } else {
-        println!("Version {} of {} is not valid", version, repository);
+        println!("Version {} of {} is not valid", version.name, repository);
         return Err(HealthCheckError);
     }
 }
 
-#[derive(Deserialize)]
-#[derive(Debug)]
+#[derive(Deserialize, Debug)]
 struct Data {
     npm: Vec<String>,
 }

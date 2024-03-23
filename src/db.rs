@@ -1,7 +1,7 @@
-use std::fmt::{ self };
-use chrono::{ DateTime, Utc };
-use serde_derive::{ Serialize, Deserialize };
-use rusqlite::{ Connection, Result, Error };
+use chrono::{DateTime, Utc};
+use rusqlite::{Connection, Error, Result};
+use serde_derive::{Deserialize, Serialize};
+use std::fmt::{self};
 
 #[derive(Deserialize, Serialize)]
 pub struct Version {
@@ -20,21 +20,23 @@ pub fn get_versions_for_repo_from_db(repository: String) -> Result<Vec<String>, 
              version text not null,
              last_updated datetime not null
          )",
-        ()
+        (),
     )?;
-    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
-        "SELECT version from versions where repository = ?1"
-    )?;
+    let mut stmt: rusqlite::Statement<'_> =
+        conn.prepare("SELECT version from versions where repository = ?1")?;
 
-    let versions = stmt.query_map([&repository], |row| { Ok(row.get(0)?) })?;
+    let versions = stmt.query_map([&repository], |row| Ok(row.get(0)?))?;
 
-    return Ok(
-        versions.map(|version: std::result::Result<String, Error>| version.unwrap()).collect()
-    );
+    return Ok(versions
+        .map(|version: std::result::Result<String, Error>| version.unwrap())
+        .collect());
 }
 
 pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
-    println!("Inserting version {:?} into db for {:?}", version.version, version.repository);
+    println!(
+        "Inserting version {:?} into db for {:?}",
+        version.version, version.repository
+    );
     let conn = Connection::open("repositories.db")?;
 
     conn.execute(
@@ -44,14 +46,17 @@ pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
              version text not null unique,
              last_updated datetime not null
          )",
-        ()
+        (),
     )?;
 
-    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
-        "INSERT INTO versions (repository, version, last_updated) VALUES (?1, ?2, ?3)"
-    )?;
+    let mut stmt: rusqlite::Statement<'_> = conn
+        .prepare("INSERT INTO versions (repository, version, last_updated) VALUES (?1, ?2, ?3)")?;
 
-    stmt.execute(&[&version.repository, &version.version, &version.last_updated.to_string()])?;
+    stmt.execute(&[
+        &version.repository,
+        &version.version,
+        &version.last_updated.to_string(),
+    ])?;
 
     return Ok(());
 }
