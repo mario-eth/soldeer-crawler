@@ -27,9 +27,9 @@ pub fn get_versions_for_repo_from_db(repository: String) -> Result<Vec<String>, 
 
     let versions = stmt.query_map([&repository], |row| Ok(row.get(0)?))?;
 
-    return Ok(versions
+    Ok(versions
         .map(|version: std::result::Result<String, Error>| version.unwrap())
-        .collect());
+        .collect())
 }
 
 pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
@@ -52,13 +52,13 @@ pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
     let mut stmt: rusqlite::Statement<'_> = conn
         .prepare("INSERT INTO versions (repository, version, last_updated) VALUES (?1, ?2, ?3)")?;
 
-    stmt.execute(&[
+    stmt.execute([
         &version.repository,
         &version.version,
         &version.last_updated.to_string(),
     ])?;
 
-    return Ok(());
+    Ok(())
 }
 
 #[derive(Debug, Clone)]

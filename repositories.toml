@@ -25,10 +25,16 @@
   "@layerzerolabs/lz-evm-oapp-v2",
   "@eth-optimism/contracts-bedrock",
   "@solidstate/contracts",
-  "erc721a"
-  
+  "erc721a",
+  "@pythnetwork/pyth-sdk-solidity",
+  "@redstone-finance/evm-connector",
+  "@gearbox-protocol/core-v3",
+  "@gearbox-protocol/integrations-v3",
+  "@gearbox-protocol/core-v2",
+  "@gearbox-protocol/integrations-v2",
+  "@gearbox-protocol/periphery-v3",
 ]
 
 "github" = [
-  "foundry-rs/forge-std"
+  "foundry-rs/forge-std",
 ]

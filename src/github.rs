@@ -8,10 +8,10 @@ use std::io::{BufReader, Cursor, Read};
 use std::path::{Path, PathBuf};
 
 pub fn load_repositories() -> Result<Vec<String>, LoadError> {
-    println!("Loading list of repositories for NPM");
+    println!("Loading list of repositories for Github");
     let filename: String = get_current_working_dir()
         .unwrap()
-        .join(String::from("npm_repositories.toml"))
+        .join(String::from("repositories.toml"))
         .to_str()
         .unwrap()
         .to_string();
@@ -24,7 +24,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
         Err(err) => {
             eprintln!("Error: {}", err);
             // Write `msg` to `stderr`.
-            eprintln!("Unable to load data from npm_repositories.toml");
+            eprintln!("Unable to load data from repositories.toml");
             // Exit the program with exit code `1`.
             return Err(LoadError);
         }
@@ -35,12 +35,10 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
         repositories.push(value.clone());
     });
 
-    return Ok(repositories);
+    Ok(repositories)
 }
 
-pub async fn github_retrieve_versions(
-    repository: &String,
-) -> Result<Vec<VersionStruct>, LoadError> {
+pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStruct>, LoadError> {
     let octocrab = octocrab::instance();
     let split_versions: Vec<&str> = repository.split("/").collect();
     let page = octocrab
@@ -62,7 +60,7 @@ pub async fn github_retrieve_versions(
             url: val.zipball_url.unwrap().to_string(),
         })
     }
-    return Ok(versions);
+    Ok(versions)
 }
 
 pub async fn download_dependency(
@@ -155,6 +153,7 @@ pub struct LoadError;
 pub struct DownloadError;
 
 #[derive(Debug, Clone)]
+#[warn(unused_imports)]
 pub struct UnzippingError {
     pub name: String,
     pub version: String,

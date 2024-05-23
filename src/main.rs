@@ -13,6 +13,7 @@ use npm::{npm_retrieve_versions, retrieve_version};
 use rusqlite::Error;
 use std::env;
 use std::process::exit;
+use utils::get_current_working_dir;
 
 #[tokio::main]
 async fn main() {
@@ -56,9 +57,7 @@ async fn main() {
             versions = github_retrieve_versions(&repository).await.unwrap();
         }
 
-        let mut index: usize = 0;
-        for version in versions {
-            index = index + 1;
+        for version in versions.into_iter() {
             if existing_versions.contains(&version.name) {
                 continue;
             }
@@ -78,7 +77,7 @@ async fn main() {
             } else {
                 let dependency_split: Vec<&str> = repository.split("/").collect();
                 let dependency_name = dependency_split[1];
-                match download_dependency(&dependency_name, &version).await {
+                match download_dependency(dependency_name, &version).await {
                     Ok(_) => {}
                     Err(err) => {
                         eprint!("Error on downloading dependency {} {:?}", &repository, err);
@@ -112,6 +111,13 @@ async fn main() {
                     println!("{:?}", err);
                 })
                 .unwrap();
+            if source == "npm" {
+                println!(
+                    "curr dir {:?}",
+                    get_current_working_dir().unwrap().join("node_modules")
+                );
+                // remove_dir_all(get_current_working_dir().unwrap().join("node_modules")).unwrap();
+            }
         }
     }
 }

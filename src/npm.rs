@@ -8,7 +8,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
     println!("Loading list of repositories for NPM");
     let filename: String = get_current_working_dir()
         .unwrap()
-        .join(String::from("npm_repositories.toml"))
+        .join(String::from("repositories.toml"))
         .to_str()
         .unwrap()
         .to_string();
@@ -21,7 +21,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
         Err(err) => {
             eprintln!("Error: {}", err);
             // Write `msg` to `stderr`.
-            eprintln!("Unable to load data from npm_repositories.toml");
+            eprintln!("Unable to load data from repositories.toml");
             // Exit the program with exit code `1`.
             return Err(LoadError);
         }
@@ -32,7 +32,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
         repositories.push(value.clone());
     });
 
-    return Ok(repositories);
+    Ok(repositories)
 }
 
 pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, LoadError> {
@@ -48,9 +48,7 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, 
         .replace("'", "\"");
 
     let versions_string: Vec<String> = serde_json::from_str::<Vec<String>>(json_string.as_str())
-        .map_err(|err: serde_json::Error| {
-            return err;
-        })
+        .map_err(|err: serde_json::Error| err)
         .unwrap();
     let mut versions: Vec<VersionStruct> = Vec::new();
     for v in versions_string {
@@ -59,7 +57,7 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, 
             url: "".to_string(),
         })
     }
-    return Ok(versions);
+    Ok(versions)
 }
 
 // TODO: multi-threading
@@ -74,7 +72,8 @@ pub fn check_versions_health(
         let output: Output = Command::new("npm")
             .arg("i")
             .arg(format!("{}@{}", repository, version))
-            .arg("--force --dry-run")
+            .arg("--force")
+            .arg("--dry-run")
             .output()
             .expect("failed to execute process");
         println!("output {:?}", output);
@@ -84,7 +83,7 @@ pub fn check_versions_health(
             println!("Version {} of {} is not valid", version, repository);
         }
     }
-    return Ok(valid_versions);
+    Ok(valid_versions)
 }
 pub fn retrieve_version(
     repository: &String,
@@ -92,17 +91,19 @@ pub fn retrieve_version(
 ) -> Result<(), HealthCheckError> {
     let output: Output = Command::new("npm")
         .arg("i")
-        .arg("--force --prefix . downloaded ")
+        .arg("--force")
+        .arg("--prefix")
+        .arg(". downloaded")
         .arg(format!("{}@{}", repository, version.name))
         .output()
         .expect("failed to execute process");
     println!("output {:?}", output);
 
     if output.status.success() {
-        return Ok(());
+        Ok(())
     } else {
         println!("Version {} of {} is not valid", version.name, repository);
-        return Err(HealthCheckError);
+        Err(HealthCheckError)
     }
 }
 

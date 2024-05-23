@@ -1,6 +1,6 @@
 use crate::utils::get_current_working_dir;
-use soldeer_lib::{
-    commands::{Args, Push, Subcommands},
+use soldeer::{
+    commands::{Push, Subcommands},
     errors::SoldeerError,
 };
 use std::thread;
@@ -117,26 +117,25 @@ pub fn npm_push_to_repository_remote(
 ) -> Result<(), SoldeerError> {
     println!("Pushing {}/{} to repository", repository, version);
     let repo = repository.replace("/", "-").replace(".", "-");
-    let args = Args {
-        command: Subcommands::Push(Push {
-            dependency: repo.clone() + "~" + version,
-            path: Some(
-                get_current_working_dir()
-                    .unwrap()
-                    .join("node_modules")
-                    .join(repository.clone())
-                    .into_os_string()
-                    .into_string()
-                    .unwrap(),
-            ),
-        }),
-    };
+    // let args = Args {
+    let command = Subcommands::Push(Push {
+        dependency: repo.clone() + "~" + version,
+        path: Some(
+            get_current_working_dir()
+                .unwrap()
+                .join("node_modules")
+                .join(repository.clone())
+                .into_os_string()
+                .into_string()
+                .unwrap(),
+        ),
+    });
 
-    thread::spawn(|| match soldeer_lib::run(args) {
-        Ok(_) => return Ok(()),
+    thread::spawn(|| match soldeer::run(command) {
+        Ok(_) => Ok(()),
         Err(err) => {
             eprintln!("{:?}", err.message);
-            return Err(err);
+            Err(err)
         }
     })
     .join()
@@ -149,26 +148,27 @@ pub fn github_push_to_repository_remote(
 ) -> Result<(), PushError> {
     println!("Pushing {}/{} to repository", dependency_name, version);
     let repo = dependency_name.replace("/", "-").replace(".", "-");
-    let full_dependency_name = format!("{}-{}", dependency_name, version);
-    let args = Args {
-        command: Subcommands::Push(Push {
-            dependency: repo.clone() + "~" + version,
-            path: Some(
-                get_current_working_dir()
-                    .unwrap()
-                    .join("github")
-                    .join(full_dependency_name)
-                    .into_os_string()
-                    .into_string()
-                    .unwrap(),
-            ),
-        }),
-    };
-    thread::spawn(|| match soldeer_lib::run(args) {
-        Ok(_) => return Ok(()),
+    let new_version = version.replace("v", "");
+    let full_dependency_name = format!("{}-{}", dependency_name, &new_version);
+    // let args = Args {
+    let command = Subcommands::Push(Push {
+        dependency: repo.clone() + "~" + &new_version,
+        path: Some(
+            get_current_working_dir()
+                .unwrap()
+                .join("github")
+                .join(full_dependency_name)
+                .into_os_string()
+                .into_string()
+                .unwrap(),
+        ),
+    });
+    // };
+    thread::spawn(|| match soldeer::run(command) {
+        Ok(_) => Ok(()),
         Err(err) => {
             eprintln!("{:?}", err.message);
-            return Err(PushError {});
+            Err(PushError {})
         }
     })
     .join()

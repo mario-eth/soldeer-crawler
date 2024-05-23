@@ -19,7 +19,7 @@ pub fn read_file_to_string(filename: String) -> Result<String, FileNotFound> {
             return Err(FileNotFound);
         }
     };
-    return Ok(contents);
+    Ok(contents)
 }
 
 #[derive(Debug, Clone)]
