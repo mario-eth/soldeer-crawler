@@ -33,6 +33,9 @@
   "@gearbox-protocol/core-v2",
   "@gearbox-protocol/integrations-v2",
   "@gearbox-protocol/periphery-v3",
+  "dn404",
+  "multicaller",
+  "soledge",
 ]
 
 "github" = [

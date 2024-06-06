@@ -76,7 +76,6 @@ pub fn check_versions_health(
             .arg("--dry-run")
             .output()
             .expect("failed to execute process");
-        println!("output {:?}", output);
         if output.status.success() {
             valid_versions.push(version.clone());
         } else {
@@ -91,9 +90,7 @@ pub fn retrieve_version(
 ) -> Result<(), HealthCheckError> {
     let output: Output = Command::new("npm")
         .arg("i")
-        .arg("--force")
-        .arg("--prefix")
-        .arg(". downloaded")
+        .arg("--force --prefix . downloaded ")
         .arg(format!("{}@{}", repository, version.name))
         .output()
         .expect("failed to execute process");

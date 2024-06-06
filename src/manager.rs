@@ -117,7 +117,6 @@ pub fn npm_push_to_repository_remote(
 ) -> Result<(), SoldeerError> {
     println!("Pushing {}/{} to repository", repository, version);
     let repo = repository.replace("/", "-").replace(".", "-");
-    // let args = Args {
     let command = Subcommands::Push(Push {
         dependency: repo.clone() + "~" + version,
         path: Some(

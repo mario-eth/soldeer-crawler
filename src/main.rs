@@ -12,6 +12,7 @@ use npm::LoadError;
 use npm::{npm_retrieve_versions, retrieve_version};
 use rusqlite::Error;
 use std::env;
+use std::fs::{remove_dir_all, remove_file};
 use std::process::exit;
 use utils::get_current_working_dir;
 
@@ -112,11 +113,17 @@ async fn main() {
                 })
                 .unwrap();
             if source == "npm" {
-                println!(
-                    "curr dir {:?}",
-                    get_current_working_dir().unwrap().join("node_modules")
-                );
-                // remove_dir_all(get_current_working_dir().unwrap().join("node_modules")).unwrap();
+                if get_current_working_dir()
+                    .unwrap()
+                    .join("node_modules")
+                    .exists()
+                {
+                    remove_dir_all(get_current_working_dir().unwrap().join("node_modules"))
+                        .unwrap();
+                    remove_file(get_current_working_dir().unwrap().join("package.json")).unwrap();
+                    remove_file(get_current_working_dir().unwrap().join("package-lock.json"))
+                        .unwrap();
+                }
             }
         }
     }
