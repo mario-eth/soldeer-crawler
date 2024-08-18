@@ -1,5 +1,7 @@
+use crate::db::{insert_invalid_version_into_db, Version};
 use crate::utils::{get_current_working_dir, read_file_to_string};
 use crate::VersionStruct;
+use chrono::DateTime;
 use serde_derive::Deserialize;
 use std::fmt::{self};
 use std::process::{Command, Output};
@@ -80,6 +82,12 @@ pub fn check_versions_health(
             valid_versions.push(version.clone());
         } else {
             println!("Version {} of {} is not valid", version, repository);
+            insert_invalid_version_into_db(Version {
+                repository: repository.to_string(),
+                version: version.to_string(),
+                last_updated: DateTime::default(),
+            })
+            .unwrap()
         }
     }
     Ok(valid_versions)
@@ -100,6 +108,12 @@ pub fn retrieve_version(
         Ok(())
     } else {
         println!("Version {} of {} is not valid", version.name, repository);
+        insert_invalid_version_into_db(Version {
+            repository: repository.to_string(),
+            version: version.name.to_string(),
+            last_updated: DateTime::default(),
+        })
+        .unwrap();
         Err(HealthCheckError)
     }
 }

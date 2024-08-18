@@ -17,3 +17,4 @@ src/soldeer.toml
 node_modules/
 .env
 github/
+.env

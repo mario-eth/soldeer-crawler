@@ -36,8 +36,18 @@
   "dn404",
   "multicaller",
   "soledge",
+  "@layerzerolabs/test-devtools-evm-foundry",
+  "@tokenysolutions/t-rex",
+  "@onchain-id/solidity",
+  "@stargatefinance/stg-evm-v2",
+  
 ]
 
 "github" = [
   "foundry-rs/forge-std",
+  "eth-infinitism/account-abstraction",
+  "base-org/webauthn-sol",
+  "safe-global/safe-smart-account",
+  "colinnielsen/safe-tools",
+  "worldcoin/world-id-contracts",
 ]

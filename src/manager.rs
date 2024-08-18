@@ -128,6 +128,8 @@ pub fn npm_push_to_repository_remote(
                 .into_string()
                 .unwrap(),
         ),
+        dry_run: Some(false),
+        skip_warnings: Some(true),
     });
 
     thread::spawn(|| match soldeer::run(command) {
@@ -147,11 +149,10 @@ pub fn github_push_to_repository_remote(
 ) -> Result<(), PushError> {
     println!("Pushing {}/{} to repository", dependency_name, version);
     let repo = dependency_name.replace("/", "-").replace(".", "-");
-    let new_version = version.replace("v", "");
-    let full_dependency_name = format!("{}-{}", dependency_name, &new_version);
-    // let args = Args {
+    let full_dependency_name = format!("{}-{}", dependency_name, &version);
+
     let command = Subcommands::Push(Push {
-        dependency: repo.clone() + "~" + &new_version,
+        dependency: repo.clone() + "~" + &version,
         path: Some(
             get_current_working_dir()
                 .unwrap()
@@ -161,13 +162,14 @@ pub fn github_push_to_repository_remote(
                 .into_string()
                 .unwrap(),
         ),
+        dry_run: Some(false),
+        skip_warnings: Some(true),
     });
-    // };
     thread::spawn(|| match soldeer::run(command) {
         Ok(_) => Ok(()),
         Err(err) => {
             eprintln!("{:?}", err.message);
-            Err(PushError {})
+            Err(PushError { cause: err.message })
         }
     })
     .join()
@@ -175,4 +177,6 @@ pub fn github_push_to_repository_remote(
 }
 
 #[derive(Debug, Clone)]
-pub struct PushError {}
+pub struct PushError {
+    pub cause: String,
+}

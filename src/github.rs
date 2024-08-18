@@ -1,6 +1,7 @@
-use crate::utils::{get_current_working_dir, read_file_to_string};
+use crate::utils::{format_version, get_current_working_dir, read_file_to_string};
 use crate::VersionStruct;
 use curl::easy::{Easy, List};
+use octocrab::auth::OAuth;
 use serde_derive::Deserialize;
 use std::fs::{self, File};
 use std::io::prelude::*;
@@ -41,6 +42,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
 pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStruct>, LoadError> {
     let octocrab = octocrab::instance();
     let split_versions: Vec<&str> = repository.split("/").collect();
+
     let page = octocrab
         .repos(split_versions[0], split_versions[1])
         .releases()
@@ -54,9 +56,11 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         .unwrap();
 
     let mut versions: Vec<VersionStruct> = Vec::new();
-    for val in page.into_iter() {
+    for val in page.into_iter().rev() {
+        let unsplit_name = val.name.unwrap();
+        let (_, name) = unsplit_name.split_once("v").unwrap();
         versions.push(VersionStruct {
-            name: val.name.unwrap(),
+            name: name.to_string(),
             url: val.zipball_url.unwrap().to_string(),
         })
     }
@@ -104,7 +108,8 @@ pub fn unzip_dependency(
     dependency_version: &String,
 ) -> Result<(), UnzippingError> {
     let file_name: String = format!("{}-{}.zip", dependency_name, dependency_version);
-    let target_name: String = format!("{}-{}/", dependency_name, dependency_version);
+    let target_dep_version = format_version(dependency_name, dependency_version);
+    let target_name: String = format!("{}-{}/", dependency_name, target_dep_version);
     let current_dir: PathBuf = get_current_working_dir()
         .unwrap()
         .join(Path::new(&("github/".to_owned() + &file_name)));

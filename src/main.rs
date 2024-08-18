@@ -5,7 +5,10 @@ mod npm;
 mod utils;
 
 use chrono::Utc;
-use db::{get_versions_for_repo_from_db, insert_version_into_db, Version};
+use db::{
+    get_invalid_versions_for_repo_from_db, get_versions_for_repo_from_db, insert_version_into_db,
+    Version,
+};
 use github::{download_dependency, github_retrieve_versions, unzip_dependency};
 use manager::{github_push_to_repository_remote, npm_push_to_repository_remote};
 use npm::LoadError;
@@ -14,7 +17,9 @@ use rusqlite::Error;
 use std::env;
 use std::fs::{remove_dir_all, remove_file};
 use std::process::exit;
-use utils::get_current_working_dir;
+use std::thread::sleep;
+use std::time::Duration;
+use utils::{format_dependency_name, format_version, get_current_working_dir};
 
 #[tokio::main]
 async fn main() {
@@ -42,11 +47,18 @@ async fn main() {
     }
 
     for repository in repositories {
+        sleep(Duration::from_millis(1000));
         let existing_versions: Vec<String> = get_versions_for_repo_from_db(repository.clone())
             .map_err(|err: Error| {
                 println!("{:?}", err);
             })
             .unwrap();
+        let invalid_versions: Vec<String> =
+            get_invalid_versions_for_repo_from_db(repository.clone())
+                .map_err(|err: Error| {
+                    println!("{:?}", err);
+                })
+                .unwrap();
         let versions: Vec<VersionStruct>;
         if source == "npm" {
             versions = npm_retrieve_versions(&repository)
@@ -59,7 +71,8 @@ async fn main() {
         }
 
         for version in versions.into_iter() {
-            if existing_versions.contains(&version.name) {
+            if existing_versions.contains(&version.name) || invalid_versions.contains(&version.name)
+            {
                 continue;
             }
             if source == "npm" {
@@ -76,8 +89,7 @@ async fn main() {
                     }
                 }
             } else {
-                let dependency_split: Vec<&str> = repository.split("/").collect();
-                let dependency_name = dependency_split[1];
+                let dependency_name = &format_dependency_name(&repository);
                 match download_dependency(dependency_name, &version).await {
                     Ok(_) => {}
                     Err(err) => {
@@ -93,10 +105,26 @@ async fn main() {
                         exit(1);
                     }
                 }
-                match github_push_to_repository_remote(&dependency_name.to_string(), &version.name)
-                {
+                let formatted_version = format_version(dependency_name, &version.name);
+                match github_push_to_repository_remote(
+                    &dependency_name.to_string(),
+                    &formatted_version,
+                ) {
                     Ok(_) => {}
-                    Err(_) => {
+                    Err(err) => {
+                        if err.cause.contains("Dependency already exists") {
+                            let version_to_insert: Version = Version {
+                                repository: repository.clone(),
+                                version: version.name.clone(),
+                                last_updated: Utc::now(),
+                            };
+
+                            insert_version_into_db(version_to_insert)
+                                .map_err(|err: Error| {
+                                    println!("{:?}", err);
+                                })
+                                .unwrap();
+                        }
                         continue;
                     }
                 }
@@ -106,6 +134,7 @@ async fn main() {
                 version: version.name.clone(),
                 last_updated: Utc::now(),
             };
+            println!("why? {:?}", repository);
 
             insert_version_into_db(version_to_insert)
                 .map_err(|err: Error| {
