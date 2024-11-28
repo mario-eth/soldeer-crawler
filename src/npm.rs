@@ -49,15 +49,22 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, 
         .unwrap()
         .replace("'", "\"");
 
-    let versions_string: Vec<String> = serde_json::from_str::<Vec<String>>(json_string.as_str())
-        .map_err(|err: serde_json::Error| err)
-        .unwrap();
     let mut versions: Vec<VersionStruct> = Vec::new();
-    for v in versions_string {
+    if json_string.contains("[") {
+        let versions_string: Vec<String> = serde_json::from_str::<Vec<String>>(json_string.trim())
+            .map_err(|err: serde_json::Error| err)
+            .unwrap();
+        for v in versions_string {
+            versions.push(VersionStruct {
+                name: v,
+                url: "".to_string(),
+            })
+        }
+    } else {
         versions.push(VersionStruct {
-            name: v,
+            name: json_string.trim().to_string(),
             url: "".to_string(),
-        })
+        });
     }
     Ok(versions)
 }

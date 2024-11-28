@@ -82,7 +82,7 @@ async fn main() {
                         continue;
                     }
                 }
-                match npm_push_to_repository_remote(&repository, &version.name) {
+                match npm_push_to_repository_remote(&repository, &version.name).await {
                     Ok(_) => {}
                     Err(_) => {
                         continue;
@@ -109,7 +109,9 @@ async fn main() {
                 match github_push_to_repository_remote(
                     &dependency_name.to_string(),
                     &formatted_version,
-                ) {
+                )
+                .await
+                {
                     Ok(_) => {}
                     Err(err) => {
                         if err.cause.contains("Dependency already exists") {
@@ -134,7 +136,6 @@ async fn main() {
                 version: version.name.clone(),
                 last_updated: Utc::now(),
             };
-            println!("why? {:?}", repository);
 
             insert_version_into_db(version_to_insert)
                 .map_err(|err: Error| {

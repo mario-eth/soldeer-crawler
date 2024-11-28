@@ -58,7 +58,14 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
     let mut versions: Vec<VersionStruct> = Vec::new();
     for val in page.into_iter().rev() {
         let unsplit_name = val.name.unwrap();
-        let (_, name) = unsplit_name.split_once("v").unwrap();
+        let mut name = unsplit_name.as_str();
+        if unsplit_name.contains("v") {
+            (_, name) = unsplit_name.split_once("v").unwrap();
+        } else if unsplit_name.contains(" ") {
+            let splitted: Vec<&str> = unsplit_name.split(" ").collect();
+            name = splitted[splitted.len() - 1];
+        }
+
         versions.push(VersionStruct {
             name: name.to_string(),
             url: val.zipball_url.unwrap().to_string(),

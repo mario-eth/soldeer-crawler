@@ -33,6 +33,28 @@ pub fn format_dependency_name(repository: &String) -> String {
         return "colinnielsen-safe-tools".to_string();
     } else if repository == "worldcoin/world-id-contracts" {
         return "worldcoin-world-id-contracts".to_string();
+    } else if repository == "Cyfrin/foundry-era-contracts" {
+        return "cyfrin-foundry-era-contracts".to_string();
+    } else if repository == "euler-xyz/ethereum-vault-connector" {
+        return "euler-xyz-ethereum-vault-connector".to_string();
+    } else if repository == "Cyfrin/foundry-devops" {
+        return "cyfrin-foundry-devops".to_string();
+    } else if repository == "alchemyplatform/modular-account" {
+        return "alchemyplatform-modular-account".to_string();
+    } else if repository == "erc6551/reference" {
+        return "erc6551-reference".to_string();
+    } else if repository == "Layr-Labs/eigenlayer-contracts" {
+        return "layr-labs-eigenlayer-contracts".to_string();
+    } else if repository == "smartcontractkit/ccip" {
+        return "smartcontractkit-ccip".to_string();
+    } else if repository == "perimetersec/fuzzlib" {
+        return "perimetersec-fuzzlib".to_string();
+    } else if repository == "crytic/properties" {
+        return "crytic-properties".to_string();
+    } else if repository == "ava-labs/avalanche-interchain-token-transfer" {
+        return "ava-labs-avalanche-interchain-token-transfer".to_string();
+    } else if repository == "Uniswap/permit2" {
+        return "uniswap-permit2".to_string();
     }
 
     let dependency_split: Vec<&str> = repository.split("/").collect();
@@ -45,6 +67,17 @@ pub fn format_version(dependency_name: &String, version: &String) -> String {
         || dependency_name == "eth-infinitism-account-abstraction"
         || dependency_name == "colinnielsen-safe-tools"
         || dependency_name == "worldcoin-world-id-contracts"
+        || dependency_name == "cyfrin-foundry-era-contracts"
+        || dependency_name == "euler-xyz-ethereum-vault-connector"
+        || dependency_name == "cyfrin-foundry-devops"
+        || dependency_name == "alchemyplatform-modular-account"
+        || dependency_name == "erc6551-reference"
+        || dependency_name == "layr-labs-eigenlayer-contracts"
+        || dependency_name == "smartcontractkit-ccip"
+        || dependency_name == "perimetersec-fuzzlib"
+        || dependency_name == "crytic-properties"
+        || dependency_name == "ava-labs-avalanche-interchain-token-transfer"
+        || dependency_name == "uniswap-permit2"
     {
         version_to_return = version_to_return.replace("v", "");
     }

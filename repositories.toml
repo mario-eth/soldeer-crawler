@@ -40,7 +40,17 @@
   "@tokenysolutions/t-rex",
   "@onchain-id/solidity",
   "@stargatefinance/stg-evm-v2",
-  
+  "@chainlink/contracts",
+  "@pancakeswap/v3-periphery",
+  "@pancakeswap/v3-core",
+  "@layerzerolabs/oapp-evm-upgradeable",
+  "@layerzerolabs/lz-evm-messagelib-v2",
+  "@layerzerolabs/lz-evm-protocol-v2",
+  "@layerzerolabs/lz-evm-v1-0.7",
+  "@layerzerolabs/oapp-evm",
+  "@layerzerolabs/oft-evm",
+  "@layerzerolabs/oft-evm-upgradeable",
+  "@layerzerolabs/oft-alt-evm"
 ]
 
 "github" = [
@@ -50,4 +60,15 @@
   "safe-global/safe-smart-account",
   "colinnielsen/safe-tools",
   "worldcoin/world-id-contracts",
+  "Cyfrin/foundry-era-contracts",
+  "euler-xyz/ethereum-vault-connector",
+  "Cyfrin/foundry-devops",
+  "alchemyplatform/modular-account",
+  "erc6551/reference",
+  "Layr-Labs/eigenlayer-contracts",
+  "smartcontractkit/ccip",
+  "perimetersec/fuzzlib",
+  "crytic/properties",
+  "ava-labs/avalanche-interchain-token-transfer",
+  "Uniswap/permit2",
 ]

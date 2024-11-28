@@ -1,8 +1,6 @@
+use soldeer_commands::commands::push::Push;
+
 use crate::utils::get_current_working_dir;
-use soldeer::{
-    commands::{Push, Subcommands},
-    errors::SoldeerError,
-};
 use std::thread;
 
 // pub fn zip_version(repository: &String, version: &String) {
@@ -111,39 +109,37 @@ use std::thread;
 //     );
 // }
 
-pub fn npm_push_to_repository_remote(
+pub async fn npm_push_to_repository_remote(
     repository: &String,
     version: &String,
-) -> Result<(), SoldeerError> {
+) -> Result<(), PushError> {
     println!("Pushing {}/{} to repository", repository, version);
     let repo = repository.replace("/", "-").replace(".", "-");
-    let command = Subcommands::Push(Push {
+    let command = soldeer_commands::Command::Push(Push {
         dependency: repo.clone() + "~" + version,
         path: Some(
             get_current_working_dir()
                 .unwrap()
                 .join("node_modules")
-                .join(repository.clone())
-                .into_os_string()
-                .into_string()
-                .unwrap(),
+                .join(repository.clone()),
         ),
-        dry_run: Some(false),
-        skip_warnings: Some(true),
+        dry_run: false,
+        skip_warnings: true,
     });
 
-    thread::spawn(|| match soldeer::run(command) {
-        Ok(_) => Ok(()),
+    match soldeer_commands::run(command).await {
+        Ok(_) => {}
         Err(err) => {
-            eprintln!("{:?}", err.message);
-            Err(err)
+            eprintln!("{:?}", err);
+            return Err(PushError {
+                cause: "Soldeer push error".to_string(),
+            });
         }
-    })
-    .join()
-    .expect("Thread panicked")
+    };
+    Ok(())
 }
 
-pub fn github_push_to_repository_remote(
+pub async fn github_push_to_repository_remote(
     dependency_name: &String,
     version: &String,
 ) -> Result<(), PushError> {
@@ -151,29 +147,28 @@ pub fn github_push_to_repository_remote(
     let repo = dependency_name.replace("/", "-").replace(".", "-");
     let full_dependency_name = format!("{}-{}", dependency_name, &version);
 
-    let command = Subcommands::Push(Push {
+    let command = soldeer_commands::Command::Push(Push {
         dependency: repo.clone() + "~" + &version,
         path: Some(
             get_current_working_dir()
                 .unwrap()
                 .join("github")
-                .join(full_dependency_name)
-                .into_os_string()
-                .into_string()
-                .unwrap(),
+                .join(full_dependency_name),
         ),
-        dry_run: Some(false),
-        skip_warnings: Some(true),
+        dry_run: false,
+        skip_warnings: true,
     });
-    thread::spawn(|| match soldeer::run(command) {
-        Ok(_) => Ok(()),
+    // println!("to push {:?} ", command);
+    match soldeer_commands::run(command).await {
+        Ok(_) => {}
         Err(err) => {
-            eprintln!("{:?}", err.message);
-            Err(PushError { cause: err.message })
+            eprintln!("{:?}", err);
+            return Err(PushError {
+                cause: "Soldeer push error".to_string(),
+            });
         }
-    })
-    .join()
-    .expect("Thread panicked")
+    };
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
