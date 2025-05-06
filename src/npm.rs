@@ -105,11 +105,11 @@ pub fn retrieve_version(
 ) -> Result<(), HealthCheckError> {
     let output: Output = Command::new("npm")
         .arg("i")
-        .arg("--force --prefix . downloaded ")
+        .args(["--force", "--prefix . downloaded "])
         .arg(format!("{}@{}", repository, version.name))
         .output()
         .expect("failed to execute process");
-    println!("output {:?}", output);
+    println!("Result of retrieving version: {:?}", output);
 
     if output.status.success() {
         Ok(())

@@ -1,7 +1,6 @@
 use crate::utils::{format_version, get_current_working_dir, read_file_to_string};
 use crate::VersionStruct;
 use curl::easy::{Easy, List};
-use octocrab::auth::OAuth;
 use serde_derive::Deserialize;
 use std::fs::{self, File};
 use std::io::prelude::*;
@@ -42,7 +41,6 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
 pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStruct>, LoadError> {
     let octocrab = octocrab::instance();
     let split_versions: Vec<&str> = repository.split("/").collect();
-
     let page = octocrab
         .repos(split_versions[0], split_versions[1])
         .releases()
@@ -56,20 +54,79 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         .unwrap();
 
     let mut versions: Vec<VersionStruct> = Vec::new();
-    for val in page.into_iter().rev() {
-        let unsplit_name = val.name.unwrap();
-        let mut name = unsplit_name.as_str();
-        if unsplit_name.contains("v") {
-            (_, name) = unsplit_name.split_once("v").unwrap();
-        } else if unsplit_name.contains(" ") {
-            let splitted: Vec<&str> = unsplit_name.split(" ").collect();
-            name = splitted[splitted.len() - 1];
+    if repository != "morpho-org/morpho-blue" && repository != "gnsps/solidity-bytes-utils" {
+        for val in page.into_iter().rev() {
+            let mut unsplit_name = val.name.unwrap();
+            if unsplit_name.is_empty() {
+                unsplit_name = val.tag_name;
+            }
+            let mut name = unsplit_name.as_str();
+            if unsplit_name.contains("v") {
+                (_, name) = unsplit_name.split_once("v").unwrap();
+            } else if unsplit_name.contains(" ") {
+                let splitted: Vec<&str> = unsplit_name.split(" ").collect();
+                name = splitted[splitted.len() - 1];
+            }
+            versions.push(VersionStruct {
+                name: name.to_string(),
+                url: val.zipball_url.unwrap().to_string(),
+            });
         }
+    }
+    if (versions.is_empty() && repository != "Uniswap/permit2")
+        || repository == "morpho-org/morpho-blue"
+        || repository == "gnsps/solidity-bytes-utils"
+    {
+        let page = octocrab
+            .repos(split_versions[0], split_versions[1])
+            .list_tags()
+            // Optional Parameters
+            .per_page(100)
+            .page(0u32)
+            // Send the request
+            .send()
+            .await
+            .unwrap();
 
+        for val in page.into_iter().rev() {
+            let mut unsplit_name = val.name;
+            if unsplit_name.is_empty() {
+                unsplit_name = val.commit.sha;
+            }
+            let mut name = unsplit_name.as_str();
+            if unsplit_name.contains("v") {
+                (_, name) = unsplit_name.split_once("v").unwrap();
+            } else if unsplit_name.contains(" ") {
+                let splitted: Vec<&str> = unsplit_name.split(" ").collect();
+                name = splitted[splitted.len() - 1];
+            }
+            versions.push(VersionStruct {
+                name: name.to_string(),
+                url: val.zipball_url.to_string(),
+            });
+        }
+    }
+
+    if repository == "morpho-org/metamorpho-v1.1" || repository == "zeframlou/create3-factory" {
+        let main_branch = octocrab
+            .repos(split_versions[0], split_versions[1])
+            .list_branches()
+            .send()
+            .await
+            .unwrap()
+            .items
+            .into_iter()
+            .find(|b| b.name == "main" || b.name == "master")
+            .unwrap();
+
+        let commit_sha = main_branch.commit.sha.clone();
         versions.push(VersionStruct {
-            name: name.to_string(),
-            url: val.zipball_url.unwrap().to_string(),
-        })
+            name: commit_sha.clone(),
+            url: format!(
+                "https://api.github.com/repos/{}/{}/zipball/{}",
+                split_versions[0], split_versions[1], commit_sha
+            ),
+        });
     }
     Ok(versions)
 }
@@ -103,7 +160,17 @@ pub async fn download_dependency(
     }
     {
         let zip_path = format!("{}-{}.zip", &dependency_name, &version.name);
-
+        // Try to decode the response data as a string to check for error messages
+        if let Ok(response_str) = String::from_utf8(dst.clone()) {
+            if response_str.contains("\"message\"") && response_str.contains("\"status\"") {
+                let mut new_version = version.clone();
+                new_version.url = new_version
+                    .url
+                    .clone()
+                    .replace("/zipball/", "/zipball/refs/tags/");
+                return Box::pin(download_dependency(dependency_name, &new_version)).await;
+            }
+        }
         let mut file = File::create(dependency_directory.join(zip_path)).unwrap();
         let _ = file.write_all(dst.as_slice());
     }
@@ -165,7 +232,6 @@ pub struct LoadError;
 pub struct DownloadError;
 
 #[derive(Debug, Clone)]
-#[warn(unused_imports)]
 pub struct UnzippingError {
     pub name: String,
     pub version: String,

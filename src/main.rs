@@ -28,23 +28,22 @@ async fn main() {
         println!("Argument failed, should be npm or github");
         exit(1);
     }
-    let repositories: Vec<String>;
     let source = target.unwrap();
-    if source == "npm" {
-        repositories = npm::load_repositories()
+    let repositories: Vec<String> = if source == "npm" {
+        npm::load_repositories()
             .map_err(|err: LoadError| {
                 println!("{:?}", err);
             })
-            .unwrap();
+            .unwrap()
     } else {
-        repositories = match github::load_repositories() {
+        match github::load_repositories() {
             Ok(repo) => repo,
             Err(err) => {
                 eprintln!("Err {:?}", err);
                 exit(1)
             }
         }
-    }
+    };
 
     for repository in repositories {
         sleep(Duration::from_millis(1000));
@@ -59,16 +58,15 @@ async fn main() {
                     println!("{:?}", err);
                 })
                 .unwrap();
-        let versions: Vec<VersionStruct>;
-        if source == "npm" {
-            versions = npm_retrieve_versions(&repository)
+        let versions: Vec<VersionStruct> = if source == "npm" {
+            npm_retrieve_versions(&repository)
                 .map_err(|err: LoadError| {
                     println!("{:?}", err);
                 })
-                .unwrap();
+                .unwrap()
         } else {
-            versions = github_retrieve_versions(&repository).await.unwrap();
-        }
+            github_retrieve_versions(&repository).await.unwrap()
+        };
 
         for version in versions.into_iter() {
             if existing_versions.contains(&version.name) || invalid_versions.contains(&version.name)
@@ -101,7 +99,7 @@ async fn main() {
                 match unzip_dependency(&dependency_name.to_string(), &version.name) {
                     Ok(_) => {}
                     Err(_) => {
-                        eprintln!("Error unzipping {}", dependency_name);
+                        eprintln!("Error unzipping {} {}", dependency_name, &version.name);
                         exit(1);
                     }
                 }
@@ -114,7 +112,7 @@ async fn main() {
                 {
                     Ok(_) => {}
                     Err(err) => {
-                        if err.cause.contains("Dependency already exists") {
+                        if err.cause.contains("dependency already exists") {
                             let version_to_insert: Version = Version {
                                 repository: repository.clone(),
                                 version: version.name.clone(),
@@ -142,18 +140,15 @@ async fn main() {
                     println!("{:?}", err);
                 })
                 .unwrap();
-            if source == "npm" {
-                if get_current_working_dir()
+            if source == "npm"
+                && get_current_working_dir()
                     .unwrap()
                     .join("node_modules")
                     .exists()
-                {
-                    remove_dir_all(get_current_working_dir().unwrap().join("node_modules"))
-                        .unwrap();
-                    remove_file(get_current_working_dir().unwrap().join("package.json")).unwrap();
-                    remove_file(get_current_working_dir().unwrap().join("package-lock.json"))
-                        .unwrap();
-                }
+            {
+                remove_dir_all(get_current_working_dir().unwrap().join("node_modules")).unwrap();
+                remove_file(get_current_working_dir().unwrap().join("package.json")).unwrap();
+                remove_file(get_current_working_dir().unwrap().join("package-lock.json")).unwrap();
             }
         }
     }

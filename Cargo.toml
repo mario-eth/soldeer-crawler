@@ -10,12 +10,13 @@ chrono = {version = "0.4.26", features = ["serde"]}
 curl = "0.4.46"
 git2 = "0.17.2"
 octocrab = "0.34.1"
+regex = "1.11.1"
 reqwest = "0.11.24"
 rusqlite = {version = "0.29.0", features = ["bundled", "chrono"]}
 serde = {version = "1.0.171", features = ["derive"]}
 serde_derive = "1.0.171"
 serde_json = "1.0.1"
-soldeer-commands = {version = "0.4.1"}
+soldeer-commands = {version = "0.5.2"}
 tokio = "1.36.0"
 tokio-dl-stream-to-disk = "1.0.0"
 toml = "0.7.6"

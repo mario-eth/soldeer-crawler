@@ -1,7 +1,7 @@
 use soldeer_commands::commands::push::Push;
 
 use crate::utils::get_current_working_dir;
-use std::thread;
+// use std::thread;
 
 // pub fn zip_version(repository: &String, version: &String) {
 //     println!("Zipping {}/{}", repository, version);
@@ -115,19 +115,21 @@ pub async fn npm_push_to_repository_remote(
 ) -> Result<(), PushError> {
     println!("Pushing {}/{} to repository", repository, version);
     let repo = repository.replace("/", "-").replace(".", "-");
-    let command = soldeer_commands::Command::Push(Push {
-        dependency: repo.clone() + "~" + version,
-        path: Some(
+
+    let push = Push::builder()
+        .dependency(repo.clone() + "~" + version)
+        .path(
             get_current_working_dir()
                 .unwrap()
                 .join("node_modules")
                 .join(repository.clone()),
-        ),
-        dry_run: false,
-        skip_warnings: true,
-    });
+        )
+        .dry_run(false)
+        .skip_warnings(true)
+        .build()
+        .into();
 
-    match soldeer_commands::run(command).await {
+    match soldeer_commands::run(push).await {
         Ok(_) => {}
         Err(err) => {
             eprintln!("{:?}", err);
@@ -146,25 +148,24 @@ pub async fn github_push_to_repository_remote(
     println!("Pushing {}/{} to repository", dependency_name, version);
     let repo = dependency_name.replace("/", "-").replace(".", "-");
     let full_dependency_name = format!("{}-{}", dependency_name, &version);
-
-    let command = soldeer_commands::Command::Push(Push {
-        dependency: repo.clone() + "~" + &version,
-        path: Some(
+    let push = Push::builder()
+        .dependency(repo.clone() + "~" + version)
+        .path(
             get_current_working_dir()
                 .unwrap()
                 .join("github")
                 .join(full_dependency_name),
-        ),
-        dry_run: false,
-        skip_warnings: true,
-    });
-    // println!("to push {:?} ", command);
-    match soldeer_commands::run(command).await {
+        )
+        .dry_run(false)
+        .skip_warnings(true)
+        .build()
+        .into();
+    match soldeer_commands::run(push).await {
         Ok(_) => {}
         Err(err) => {
             eprintln!("{:?}", err);
             return Err(PushError {
-                cause: "Soldeer push error".to_string(),
+                cause: format!("Soldeer push error {}", err),
             });
         }
     };

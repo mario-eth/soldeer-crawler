@@ -50,7 +50,9 @@
   "@layerzerolabs/oapp-evm",
   "@layerzerolabs/oft-evm",
   "@layerzerolabs/oft-evm-upgradeable",
-  "@layerzerolabs/oft-alt-evm"
+  "@layerzerolabs/oft-alt-evm",
+  "@latticexyz/store",
+  "@layerzerolabs/onft-evm"
 ]
 
 "github" = [
@@ -71,4 +73,20 @@
   "crytic/properties",
   "ava-labs/avalanche-interchain-token-transfer",
   "Uniswap/permit2",
+  "gnosisguild/zodiac",
+  "huff-language/huffmate",
+  "smartcontractkit/chainlink-brownie-contracts",
+  "ProjectOpenSea/operator-filter-registry",
+  "succinctlabs/sp1-contracts",
+  "Uniswap/v4-core",
+  "Uniswap/v4-periphery",
+  "smartcontractkit/chainlink",
+  "limitbreakinc/creator-token-standards",
+  "morpho-org/morpho-blue",
+  "hashgraph/hedera-forking",
+  "gnsps/solidity-bytes-utils",
+  "Uniswap/smart-order-router",
+  "zeframlou/create3-factory",
+  "morpho-org/metamorpho-v1.1"
 ]
+  
