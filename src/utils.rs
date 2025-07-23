@@ -88,6 +88,16 @@ pub fn format_dependency_name(repository: &String) -> String {
         return "zeframlou-create3-factory".to_string();
     } else if repository == "morpho-org/metamorpho-v1.1" {
         return "morpho-org-metamorpho-v1.1".to_string();
+    } else if repository == "morpho-org/public-allocator" {
+        return "morpho-org-public-allocator".to_string();
+    } else if repository == "openzeppelin/uniswap-hooks" {
+        return "openzeppelin-uniswap-hooks".to_string();
+    } else if repository == "0xsequence/sstore2" {
+        return "0xsequence-sstore2".to_string();
+    } else if repository == "huff-language/foundry-huff" {
+        return "huff-,language-foundry-huff".to_string();
+    } else if repository == "a16z/halmos-cheatcodes" {
+        return "a16z-halmos-cheatcodes".to_string();
     }
     let dependency_split: Vec<&str> = repository.split("/").collect();
     dependency_split[1].to_string()
@@ -126,6 +136,11 @@ pub fn format_version(dependency_name: &String, version: &String) -> String {
         || dependency_name == "uniswap-smart-order-router"
         || dependency_name == "zeframlou-create3-factory"
         || dependency_name == "morpho-org-metamorpho-v1.1"
+        || dependency_name == "morpho-org-public-allocator"
+        || dependency_name == "openzeppelin-uniswap-hooks"
+        || dependency_name == "0xsequence-sstore2"
+        || dependency_name == "huff-language-foundry-huff"
+        || dependency_name == "a16z-halmos-cheatcodes"
     {
         let version_pattern = r"^v(\d+\.)*\d+$";
         let re = Regex::new(version_pattern).unwrap();

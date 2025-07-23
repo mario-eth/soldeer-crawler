@@ -52,7 +52,8 @@
   "@layerzerolabs/oft-evm-upgradeable",
   "@layerzerolabs/oft-alt-evm",
   "@latticexyz/store",
-  "@layerzerolabs/onft-evm"
+  "@layerzerolabs/onft-evm",
+  "@solarity/solidity-lib",
 ]
 
 "github" = [
@@ -69,7 +70,6 @@
   "erc6551/reference",
   "Layr-Labs/eigenlayer-contracts",
   "smartcontractkit/ccip",
-  "perimetersec/fuzzlib",
   "crytic/properties",
   "ava-labs/avalanche-interchain-token-transfer",
   "Uniswap/permit2",
@@ -87,6 +87,11 @@
   "gnsps/solidity-bytes-utils",
   "Uniswap/smart-order-router",
   "zeframlou/create3-factory",
-  "morpho-org/metamorpho-v1.1"
+  "morpho-org/metamorpho-v1.1",
+  "morpho-org/public-allocator",
+  "openzeppelin/uniswap-hooks",
+  "0xsequence/sstore2",
+  "huff-language/foundry-huff",
+  "a16z/halmos-cheatcodes"
 ]
   

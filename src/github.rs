@@ -52,9 +52,11 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         .send()
         .await
         .unwrap();
-
     let mut versions: Vec<VersionStruct> = Vec::new();
-    if repository != "morpho-org/morpho-blue" && repository != "gnsps/solidity-bytes-utils" {
+    if repository != "morpho-org/morpho-blue"
+        && repository != "morpho-org/public-allocator"
+        && repository != "gnsps/solidity-bytes-utils"
+    {
         for val in page.into_iter().rev() {
             let mut unsplit_name = val.name.unwrap();
             if unsplit_name.is_empty() {
@@ -107,7 +109,12 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         }
     }
 
-    if repository == "morpho-org/metamorpho-v1.1" || repository == "zeframlou/create3-factory" {
+    if repository == "morpho-org/metamorpho-v1.1"
+        || repository == "zeframlou/create3-factory"
+        || repository == "0xsequence/sstore2"
+        || repository == "huff-language/foundry-huff"
+        || repository == "a16z/halmos-cheatcodes"
+    {
         let main_branch = octocrab
             .repos(split_versions[0], split_versions[1])
             .list_branches()
