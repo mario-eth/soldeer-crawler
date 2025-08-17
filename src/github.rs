@@ -39,6 +39,7 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
 }
 
 pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStruct>, LoadError> {
+    println!("repository: {}", repository);
     let octocrab = octocrab::instance();
     let split_versions: Vec<&str> = repository.split("/").collect();
     let page = octocrab
@@ -75,9 +76,13 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
             });
         }
     }
+
+    //tags
     if (versions.is_empty() && repository != "Uniswap/permit2")
         || repository == "morpho-org/morpho-blue"
         || repository == "gnsps/solidity-bytes-utils"
+        || repository == "smartcontractkit/chainlink-evm"
+        || repository == "manifoldxyz/creator-core-solidity"
     {
         let page = octocrab
             .repos(split_versions[0], split_versions[1])

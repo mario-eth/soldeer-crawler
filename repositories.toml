@@ -40,7 +40,7 @@
   "@tokenysolutions/t-rex",
   "@onchain-id/solidity",
   "@stargatefinance/stg-evm-v2",
-  "@chainlink/contracts",
+  # "@chainlink/contracts",
   "@pancakeswap/v3-periphery",
   "@pancakeswap/v3-core",
   "@layerzerolabs/oapp-evm-upgradeable",
@@ -80,7 +80,6 @@
   "succinctlabs/sp1-contracts",
   "Uniswap/v4-core",
   "Uniswap/v4-periphery",
-  "smartcontractkit/chainlink",
   "limitbreakinc/creator-token-standards",
   "morpho-org/morpho-blue",
   "hashgraph/hedera-forking",
@@ -92,6 +91,12 @@
   "openzeppelin/uniswap-hooks",
   "0xsequence/sstore2",
   "huff-language/foundry-huff",
-  "a16z/halmos-cheatcodes"
+  "a16z/halmos-cheatcodes",
+  "manifoldxyz/libraries-solidity",
+  "solv-finance/erc-3525",
+  "smartcontractkit/chainlink-evm",
+  "estarriolvetch/erc721psi",
+  "circlefin/evm-cctp-contracts",
+  "manifoldxyz/creator-core-solidity"
 ]
   

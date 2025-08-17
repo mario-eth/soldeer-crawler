@@ -98,6 +98,18 @@ pub fn format_dependency_name(repository: &String) -> String {
         return "huff-,language-foundry-huff".to_string();
     } else if repository == "a16z/halmos-cheatcodes" {
         return "a16z-halmos-cheatcodes".to_string();
+    } else if repository == "manifoldxyz/libraries-solidity" {
+        return "manifoldxyz-libraries-solidity".to_string();
+    } else if repository == "solv-finance/erc-3525" {
+        return "solv-finance-erc-3525".to_string();
+    } else if repository == "smartcontractkit/chainlink-evm" {
+        return "smartcontractkit-chainlink-evm".to_string();
+    } else if repository == "estarriolvetch/erc721psi" {
+        return "estarriolvetch-erc721psi".to_string();
+    } else if repository == "circlefin/evm-cctp-contracts" {
+        return "circlefin-evm-cctp-contracts".to_string();
+    } else if repository == "manifoldxyz/creator-core-solidity" {
+        return "manifoldxyz-creator-core-solidity".to_string();
     }
     let dependency_split: Vec<&str> = repository.split("/").collect();
     dependency_split[1].to_string()
@@ -141,6 +153,12 @@ pub fn format_version(dependency_name: &String, version: &String) -> String {
         || dependency_name == "0xsequence-sstore2"
         || dependency_name == "huff-language-foundry-huff"
         || dependency_name == "a16z-halmos-cheatcodes"
+        || dependency_name == "manifoldxyz-libraries-solidity"
+        || dependency_name == "solv-finance-erc-3525"
+        || dependency_name == "smartcontractkit-chainlink-evm"
+        || dependency_name == "estarriolvetch-erc721psi"
+        || dependency_name == "circlefin-evm-cctp-contracts"
+        || dependency_name == "manifoldxyz-creator-core-solidity"
     {
         let version_pattern = r"^v(\d+\.)*\d+$";
         let re = Regex::new(version_pattern).unwrap();
