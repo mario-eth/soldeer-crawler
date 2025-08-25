@@ -119,17 +119,47 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         || repository == "0xsequence/sstore2"
         || repository == "huff-language/foundry-huff"
         || repository == "a16z/halmos-cheatcodes"
+        || repository == "Uniswap/v4-periphery"
     {
-        let main_branch = octocrab
-            .repos(split_versions[0], split_versions[1])
-            .list_branches()
-            .send()
-            .await
-            .unwrap()
-            .items
-            .into_iter()
-            .find(|b| b.name == "main" || b.name == "master")
-            .unwrap();
+        let mut main_branch = None;
+        let mut page_num = 1u32;
+
+        // Iterate through all pages to find main or master branch
+        loop {
+            let page = octocrab
+                .repos(split_versions[0], split_versions[1])
+                .list_branches()
+                .per_page(100)
+                .page(page_num)
+                .send()
+                .await
+                .unwrap();
+
+            // Look for main or master branch in current page
+            if let Some(branch) = page
+                .items
+                .iter()
+                .find(|b| b.name == "main" || b.name == "master")
+            {
+                main_branch = Some(branch.clone());
+                break;
+            }
+
+            // If no more pages, break
+            if page.items.len() < 100 {
+                break;
+            }
+
+            page_num += 1;
+        }
+
+        let main_branch = main_branch.unwrap_or_else(|| {
+            eprintln!(
+                "No main or master branch found for repository: {}",
+                repository
+            );
+            std::process::exit(1);
+        });
 
         let commit_sha = main_branch.commit.sha.clone();
         versions.push(VersionStruct {
