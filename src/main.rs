@@ -6,8 +6,8 @@ mod utils;
 
 use chrono::Utc;
 use db::{
-    get_invalid_versions_for_repo_from_db, get_versions_for_repo_from_db, insert_version_into_db,
-    Version,
+    get_invalid_versions_for_repo_from_db, get_repositories_not_updated_in_last_hour,
+    get_versions_for_repo_from_db, insert_version_into_db, Version,
 };
 use github::{download_dependency, github_retrieve_versions, unzip_dependency};
 use manager::{github_push_to_repository_remote, npm_push_to_repository_remote};
@@ -29,7 +29,7 @@ async fn main() {
         exit(1);
     }
     let source = target.unwrap();
-    let repositories: Vec<String> = if source == "npm" {
+    let all_repositories: Vec<String> = if source == "npm" {
         npm::load_repositories()
             .map_err(|err: LoadError| {
                 println!("{:?}", err);
@@ -42,6 +42,21 @@ async fn main() {
                 eprintln!("Err {:?}", err);
                 exit(1)
             }
+        }
+    };
+
+    // Filter repositories that haven't been updated in the last hour
+    let repositories = match get_repositories_not_updated_in_last_hour(all_repositories) {
+        Ok(repos) => {
+            println!(
+                "Found {} repositories that need updating (not updated in the last hour)",
+                repos.len()
+            );
+            repos
+        }
+        Err(err) => {
+            eprintln!("Error filtering repositories: {:?}", err);
+            exit(1);
         }
     };
 
@@ -67,6 +82,8 @@ async fn main() {
         } else {
             github_retrieve_versions(&repository).await.unwrap()
         };
+
+        let versions_is_empty = versions.is_empty();
 
         for version in versions.into_iter() {
             if existing_versions.contains(&version.name) || invalid_versions.contains(&version.name)
@@ -150,6 +167,20 @@ async fn main() {
                 remove_file(get_current_working_dir().unwrap().join("package.json")).unwrap();
                 remove_file(get_current_working_dir().unwrap().join("package-lock.json")).unwrap();
             }
+        }
+
+        // if we don't have any version, still update the last updated time
+        if versions_is_empty {
+            let version_to_insert: Version = Version {
+                repository: repository.clone(),
+                version: "".to_string(),
+                last_updated: Utc::now(),
+            };
+            insert_version_into_db(version_to_insert)
+                .map_err(|err: Error| {
+                    println!("{:?}", err);
+                })
+                .unwrap();
         }
     }
 }

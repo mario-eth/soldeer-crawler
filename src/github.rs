@@ -83,6 +83,8 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         || repository == "gnsps/solidity-bytes-utils"
         || repository == "smartcontractkit/chainlink-evm"
         || repository == "manifoldxyz/creator-core-solidity"
+        || repository == "Balmy-protocol/uniswap-v3-oracle"
+        || repository == "Recon-Fuzz/chimera"
     {
         let page = octocrab
             .repos(split_versions[0], split_versions[1])
@@ -120,6 +122,12 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         || repository == "huff-language/foundry-huff"
         || repository == "a16z/halmos-cheatcodes"
         || repository == "Uniswap/v4-periphery"
+        || repository == "transmissions11/solmate"
+        || repository == "boringcrypto/BoringSolidity"
+        || repository == "euler-xyz/euler-interfaces"
+        || repository == "pendle-finance/pendle-core-v2-public"
+        || repository == "Recon-Fuzz/setup-helpers"
+        || repository == "morpho-org/morpho-blue-oracles"
     {
         let mut main_branch = None;
         let mut page_num = 1u32;

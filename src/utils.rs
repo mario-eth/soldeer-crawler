@@ -110,6 +110,24 @@ pub fn format_dependency_name(repository: &String) -> String {
         return "circlefin-evm-cctp-contracts".to_string();
     } else if repository == "manifoldxyz/creator-core-solidity" {
         return "manifoldxyz-creator-core-solidity".to_string();
+    } else if repository == "transmissions11/solmate" {
+        return "solmate".to_string();
+    } else if repository == "boringcrypto/BoringSolidity" {
+        return "boringcrypto-boringsolidity".to_string();
+    } else if repository == "euler-xyz/euler-interfaces" {
+        return "euler-xyz-euler-interfaces".to_string();
+    } else if repository == "pendle-finance/pendle-core-v2-public" {
+        return "pendle-finance-pendle-core-v2-public".to_string();
+    } else if repository == "Balmy-protocol/uniswap-v3-oracle" {
+        return "balmy-protocol-uniswap-v3-oracle".to_string();
+    } else if repository == "Recon-Fuzz/chimera" {
+        return "recon-fuzz-chimera".to_string();
+    } else if repository == "Recon-Fuzz/setup-helpers" {
+        return "recon-fuzz-setup-helpers".to_string();
+    } else if repository == "morpho-org/morpho-blue-oracles" {
+        return "morpho-org-morpho-blue-oracles".to_string();
+    } else if repository == "risc0/risc0-ethereum" {
+        return "risc0-risc0-ethereum".to_string();
     }
     let dependency_split: Vec<&str> = repository.split("/").collect();
     dependency_split[1].to_string()
@@ -159,8 +177,17 @@ pub fn format_version(dependency_name: &String, version: &String) -> String {
         || dependency_name == "estarriolvetch-erc721psi"
         || dependency_name == "circlefin-evm-cctp-contracts"
         || dependency_name == "manifoldxyz-creator-core-solidity"
+        || dependency_name == "solmate"
+        || dependency_name == "boringcrypto-boringsolidity"
+        || dependency_name == "euler-xyz-euler-interfaces"
+        || dependency_name == "pendle-finance-pendle-core-v2-public"
+        || dependency_name == "balmy-protocol-uniswap-v3-oracle"
+        || dependency_name == "recon-fuzz-chimera"
+        || dependency_name == "recon-fuzz-setup-helpers"
+        || dependency_name == "morpho-org-morpho-blue-oracles"
+        || dependency_name == "risc0-risc0-ethereum"
     {
-        let version_pattern = r"^v(\d+\.)*\d+$";
+                let version_pattern = r"^v(\d+\.)*\d+$";
         let re = Regex::new(version_pattern).unwrap();
         if re.is_match(&version_to_return) {
             version_to_return = version_to_return[1..].to_string();
