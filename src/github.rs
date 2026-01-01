@@ -40,9 +40,30 @@ pub fn load_repositories() -> Result<Vec<String>, LoadError> {
 
 pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStruct>, LoadError> {
     println!("repository: {}", repository);
-    let octocrab = octocrab::instance();
+
+    // Try to get GitHub token from environment variable and build octocrab instance
+    let octocrab_builder = match std::env::var("GITHUB_TOKEN") {
+        Ok(token) => Some(
+            octocrab::OctocrabBuilder::new()
+                .personal_token(token)
+                .build()
+                .expect("Failed to build Octocrab instance with token"),
+        ),
+        Err(_) => {
+            eprintln!("Warning: GITHUB_TOKEN not set. Using unauthenticated API access (lower rate limits)");
+            eprintln!("Set GITHUB_TOKEN environment variable for higher rate limits");
+            None
+        }
+    };
+
+    let octocrab = if let Some(instance) = octocrab_builder {
+        std::sync::Arc::new(instance)
+    } else {
+        octocrab::instance()
+    };
+
     let split_versions: Vec<&str> = repository.split("/").collect();
-    let page = octocrab
+    let page = match octocrab
         .repos(split_versions[0], split_versions[1])
         .releases()
         .list()
@@ -52,7 +73,17 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         // Send the request
         .send()
         .await
-        .unwrap();
+    {
+        Ok(page) => page,
+        Err(err) => {
+            eprintln!("Error fetching releases for {}: {}", repository, err);
+            eprintln!(
+                "This might be due to GitHub API rate limiting. Please wait and try again later."
+            );
+            eprintln!("Consider setting up a GitHub token via GITHUB_TOKEN environment variable for higher rate limits.");
+            return Err(LoadError);
+        }
+    };
     let mut versions: Vec<VersionStruct> = Vec::new();
     if repository != "morpho-org/morpho-blue"
         && repository != "morpho-org/public-allocator"
@@ -86,7 +117,7 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
         || repository == "Balmy-protocol/uniswap-v3-oracle"
         || repository == "Recon-Fuzz/chimera"
     {
-        let page = octocrab
+        let page = match octocrab
             .repos(split_versions[0], split_versions[1])
             .list_tags()
             // Optional Parameters
@@ -95,7 +126,15 @@ pub async fn github_retrieve_versions(repository: &str) -> Result<Vec<VersionStr
             // Send the request
             .send()
             .await
-            .unwrap();
+        {
+            Ok(page) => page,
+            Err(err) => {
+                eprintln!("Error fetching tags for {}: {}", repository, err);
+                eprintln!("This might be due to GitHub API rate limiting. Please wait and try again later.");
+                eprintln!("Consider setting up a GitHub token via GITHUB_TOKEN environment variable for higher rate limits.");
+                return Err(LoadError);
+            }
+        };
 
         for val in page.into_iter().rev() {
             let mut unsplit_name = val.name;
