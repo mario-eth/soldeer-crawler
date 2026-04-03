@@ -9,11 +9,14 @@ use db::{
     get_invalid_versions_for_repo_from_db, get_repositories_not_updated_in_last_hour,
     get_versions_for_repo_from_db, insert_version_into_db, Version,
 };
-use github::{download_dependency, github_retrieve_versions, unzip_dependency};
+use github::{
+    download_dependency, github_retrieve_versions, unzip_dependency, GithubApiError,
+};
 use manager::{github_push_to_repository_remote, npm_push_to_repository_remote};
 use npm::LoadError;
 use npm::{npm_retrieve_versions, retrieve_version};
 use rusqlite::Error;
+use std::collections::HashSet;
 use std::env;
 use std::fs::{remove_dir_all, remove_file};
 use std::process::exit;
@@ -23,12 +26,10 @@ use utils::{format_dependency_name, format_version, get_current_working_dir};
 
 #[tokio::main]
 async fn main() {
-    let target = env::args().nth(1);
-    if target.is_none() {
+    let Some(source) = env::args().nth(1) else {
         println!("Argument failed, should be npm or github");
         exit(1);
-    }
-    let source = target.unwrap();
+    };
     let all_repositories: Vec<String> = if source == "npm" {
         npm::load_repositories()
             .map_err(|err: LoadError| {
@@ -62,17 +63,21 @@ async fn main() {
 
     for repository in repositories {
         sleep(Duration::from_millis(1000));
-        let existing_versions: Vec<String> = get_versions_for_repo_from_db(repository.clone())
+        let existing_versions: HashSet<String> = get_versions_for_repo_from_db(repository.clone())
             .map_err(|err: Error| {
                 println!("{:?}", err);
             })
-            .unwrap();
-        let invalid_versions: Vec<String> =
+            .unwrap()
+            .into_iter()
+            .collect();
+        let invalid_versions: HashSet<String> =
             get_invalid_versions_for_repo_from_db(repository.clone())
                 .map_err(|err: Error| {
                     println!("{:?}", err);
                 })
-                .unwrap();
+                .unwrap()
+                .into_iter()
+                .collect();
         let versions: Vec<VersionStruct> = if source == "npm" {
             npm_retrieve_versions(&repository)
                 .map_err(|err: LoadError| {
@@ -80,7 +85,29 @@ async fn main() {
                 })
                 .unwrap()
         } else {
-            github_retrieve_versions(&repository).await.unwrap()
+            match github_retrieve_versions(&repository).await {
+                Ok(v) => v,
+                Err(GithubApiError::BadCredentials) => {
+                    eprintln!(
+                        "Stopping: GitHub API returned Bad credentials. Fix GITHUB_TOKEN and re-run."
+                    );
+                    exit(1);
+                }
+                Err(GithubApiError::MissingDefaultBranch) => {
+                    eprintln!(
+                        "Stopping: repository has no main/master branch: {}",
+                        repository
+                    );
+                    exit(1);
+                }
+                Err(GithubApiError::Other) => {
+                    eprintln!(
+                        "Skipping {} after GitHub fetch failure; retry on a later run.",
+                        repository
+                    );
+                    continue;
+                }
+            }
         };
 
         let versions_is_empty = versions.is_empty();
@@ -108,15 +135,18 @@ async fn main() {
                 match download_dependency(dependency_name, &version).await {
                     Ok(_) => {}
                     Err(err) => {
-                        eprint!("Error on downloading dependency {} {:?}", &repository, err);
+                        eprintln!(
+                            "Error on downloading dependency {}: {:?}",
+                            &repository, err
+                        );
                         exit(1);
                     }
                 }
 
                 match unzip_dependency(&dependency_name.to_string(), &version.name) {
                     Ok(_) => {}
-                    Err(_) => {
-                        eprintln!("Error unzipping {} {}", dependency_name, &version.name);
+                    Err(err) => {
+                        eprintln!("Error unzipping: {err}");
                         exit(1);
                     }
                 }

@@ -3,6 +3,7 @@ use std::env;
 use std::fmt;
 use std::fs::{self};
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 // get the current working directory
 pub fn get_current_working_dir() -> std::io::Result<PathBuf> {
@@ -95,7 +96,7 @@ pub fn format_dependency_name(repository: &String) -> String {
     } else if repository == "0xsequence/sstore2" {
         return "0xsequence-sstore2".to_string();
     } else if repository == "huff-language/foundry-huff" {
-        return "huff-,language-foundry-huff".to_string();
+        return "huff-language-foundry-huff".to_string();
     } else if repository == "a16z/halmos-cheatcodes" {
         return "a16z-halmos-cheatcodes".to_string();
     } else if repository == "manifoldxyz/libraries-solidity" {
@@ -128,9 +129,15 @@ pub fn format_dependency_name(repository: &String) -> String {
         return "morpho-org-morpho-blue-oracles".to_string();
     } else if repository == "risc0/risc0-ethereum" {
         return "risc0-risc0-ethereum".to_string();
+    } else if repository == "SorellaLabs/angstrom" {
+        return "sorellalabs-angstrom".to_string();
     }
-    let dependency_split: Vec<&str> = repository.split("/").collect();
-    dependency_split[1].to_string()
+    let parts: Vec<&str> = repository.split('/').collect();
+    match parts.as_slice() {
+        [_, name, ..] => (*name).to_string(),
+        [only] => (*only).to_string(),
+        [] => String::new(),
+    }
 }
 
 pub fn format_version(dependency_name: &String, version: &String) -> String {
@@ -185,20 +192,26 @@ pub fn format_version(dependency_name: &String, version: &String) -> String {
         || dependency_name == "recon-fuzz-chimera"
         || dependency_name == "recon-fuzz-setup-helpers"
         || dependency_name == "morpho-org-morpho-blue-oracles"
-        || dependency_name == "risc0-risc0-ethereum"
+        || dependency_name == "sorellalabs-angstrom"
     {
-                let version_pattern = r"^v(\d+\.)*\d+$";
-        let re = Regex::new(version_pattern).unwrap();
+        static V_PREFIX_VERSION: OnceLock<Regex> = OnceLock::new();
+        let re = V_PREFIX_VERSION.get_or_init(|| {
+            Regex::new(r"^v(\d+\.)*\d+$").expect("version-tag regex should compile")
+        });
         if re.is_match(&version_to_return) {
             version_to_return = version_to_return[1..].to_string();
-        } else if version_to_return.contains(" ") {
-            version_to_return = version_to_return.replace(" ", "-");
+        } else if version_to_return.contains(' ') {
+            version_to_return = version_to_return.replace(' ', "-");
         }
     }
 
-    if version_to_return.contains(" ") {
-        let split: Vec<&str> = version_to_return.split(" ").collect();
-        return split[split.len() - 1].to_string();
+    if version_to_return.contains(' ') {
+        let split: Vec<&str> = version_to_return.split(' ').collect();
+        return split
+            .last()
+            .copied()
+            .unwrap_or(version_to_return.as_str())
+            .to_string();
     }
     version_to_return.to_string()
 }

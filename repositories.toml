@@ -105,6 +105,7 @@
   "manifoldxyz/libraries-solidity",
   "boringcrypto/BoringSolidity",
   "0xsequence/sstore2",
+  "SorellaLabs/angstrom"
   # "Uniswap/permit2",
   # "huff-language/huffmate",
 ]

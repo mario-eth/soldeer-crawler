@@ -1,7 +1,6 @@
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::{Connection, Error, Result};
 use serde_derive::{Deserialize, Serialize};
-use std::fmt::{self};
 
 #[derive(Deserialize, Serialize)]
 pub struct Version {
@@ -25,11 +24,11 @@ pub fn get_versions_for_repo_from_db(repository: String) -> Result<Vec<String>, 
     let mut stmt: rusqlite::Statement<'_> =
         conn.prepare("SELECT version from versions where repository = ?1")?;
 
-    let versions = stmt.query_map([&repository], |row| Ok(row.get(0)?))?;
+    let versions: Vec<String> = stmt
+        .query_map([&repository], |row| row.get(0))?
+        .collect::<Result<_, _>>()?;
 
-    Ok(versions
-        .map(|version: std::result::Result<String, Error>| version.unwrap())
-        .collect())
+    Ok(versions)
 }
 
 pub fn get_invalid_versions_for_repo_from_db(repository: String) -> Result<Vec<String>, Error> {
@@ -47,11 +46,11 @@ pub fn get_invalid_versions_for_repo_from_db(repository: String) -> Result<Vec<S
     let mut stmt: rusqlite::Statement<'_> =
         conn.prepare("SELECT version from invalid_versions where repository = ?1")?;
 
-    let versions = stmt.query_map([&repository], |row| Ok(row.get(0)?))?;
+    let versions: Vec<String> = stmt
+        .query_map([&repository], |row| row.get(0))?
+        .collect::<Result<_, _>>()?;
 
-    Ok(versions
-        .map(|version: std::result::Result<String, Error>| version.unwrap())
-        .collect())
+    Ok(versions)
 }
 
 pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
@@ -64,8 +63,8 @@ pub fn insert_version_into_db(version: Version) -> Result<(), Error> {
     conn.execute(
         "create table if not exists versions (
              id integer primary key,
-             repository text not null unique,
-             version text not null unique,
+             repository text not null,
+             version text not null,
              last_updated datetime not null
          )",
         (),
@@ -93,8 +92,8 @@ pub fn insert_invalid_version_into_db(version: Version) -> Result<(), Error> {
     conn.execute(
         "create table if not exists invalid_versions (
              id integer primary key,
-             repository text not null unique,
-             version text not null unique,
+             repository text not null,
+             version text not null,
              last_updated datetime not null
          )",
         (),
@@ -111,15 +110,6 @@ pub fn insert_invalid_version_into_db(version: Version) -> Result<(), Error> {
     ])?;
 
     Ok(())
-}
-
-#[derive(Debug, Clone)]
-pub struct NotFound;
-
-impl fmt::Display for NotFound {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "file not found")
-    }
 }
 
 pub fn get_repositories_not_updated_in_last_hour(
@@ -166,7 +156,8 @@ pub fn get_repositories_not_updated_in_last_hour(
             Ok(last_updated_str)
         })?;
 
-        let should_update = if let Some(Ok(Some(last_updated_str))) = rows.next() {
+        let should_update = match rows.next() {
+            Some(Ok(Some(last_updated_str))) => {
             // Parse the datetime string and check if it's older than 1 hour
             match last_updated_str
                 .strip_suffix(" UTC")
@@ -194,9 +185,15 @@ pub fn get_repositories_not_updated_in_last_hour(
                     true // If we can't parse, assume it needs updating
                 }
             }
-        } else {
-            // No records found for this repository, so it needs updating
-            true
+            }
+            Some(Ok(None)) | None => true,
+            Some(Err(e)) => {
+                eprintln!(
+                    "SQLite error reading last_updated for {}: {}",
+                    repository, e
+                );
+                true
+            }
         };
 
         if should_update {

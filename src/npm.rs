@@ -42,18 +42,37 @@ pub fn npm_retrieve_versions(repository: &String) -> Result<Vec<VersionStruct>, 
         .arg("view")
         .arg(repository)
         .arg("versions")
+        .arg("--json")
         .output()
-        .expect("failed to execute process");
-    // println!("status: {}", String::from_utf8(output.stdout.clone()).unwrap());
-    let json_string: String = String::from_utf8(output.stdout.clone())
-        .unwrap()
-        .replace("'", "\"");
+        .map_err(|e| {
+            eprintln!("failed to spawn npm: {}", e);
+            LoadError
+        })?;
+
+    if !output.status.success() {
+        eprintln!(
+            "npm view failed for {} (status {}): {}",
+            repository,
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return Err(LoadError);
+    }
+
+    let json_string = String::from_utf8(output.stdout)
+        .map_err(|e| {
+            eprintln!("npm view stdout was not UTF-8 for {}: {}", repository, e);
+            LoadError
+        })?
+        .replace('\'', "\"");
 
     let mut versions: Vec<VersionStruct> = Vec::new();
-    if json_string.contains("[") {
-        let versions_string: Vec<String> = serde_json::from_str::<Vec<String>>(json_string.trim())
-            .map_err(|err: serde_json::Error| err)
-            .unwrap();
+    if json_string.contains('[') {
+        let versions_string: Vec<String> = serde_json::from_str(json_string.trim())
+            .map_err(|e| {
+                eprintln!("failed to parse npm versions JSON for {}: {}", repository, e);
+                LoadError
+            })?;
         for v in versions_string {
             versions.push(VersionStruct {
                 name: v,
@@ -104,11 +123,10 @@ pub fn retrieve_version(
     version: &VersionStruct,
 ) -> Result<(), HealthCheckError> {
     let output: Output = Command::new("npm")
-        .arg("i")
-        .args(["--force", "--prefix . downloaded "])
+        .args(["install", "--force", "--prefix", "."])
         .arg(format!("{}@{}", repository, version.name))
         .output()
-        .expect("failed to execute process");
+        .expect("failed to execute npm install");
     println!("Result of retrieving version: {:?}", output);
 
     if output.status.success() {
